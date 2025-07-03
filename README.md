@@ -18,14 +18,18 @@ RACRA is a multi-agent conversational system equipped role-aware RAG and several
 - **🔍 Autonomous Source Selection**  
   Dynamically determines the most relevant data source (SQL, vector DB, knowledge base) based on the user’s query.
 
+
 - **🔗 Multi-Source Integration**  
   Combines information from multiple sources to provide comprehensive, unified answers.
+
 
 - **📚 Citation Generation**  
   Automatically includes references to the original data sources for transparency and traceability.
 
+
 - **🧠 Contextual Awareness**  
   Maintains conversational context to deliver coherent, relevant follow-up responses.
+
 
 - **🛠️ Tool Utilization**  
   Employs specialized tools like web search, calculators, or custom plugins when needed.
@@ -48,6 +52,40 @@ RACRA understands and tailors its responses based on the user’s role:
 - Access to supplier information, RFIs, and shared organizational knowledge  
 - Prioritized sources: Suppliers Database, RFI Database, and Common Knowledge Base (shared architect/engineer knowledge)
 
+---
+
+## 📦 Requirements
+
+Install the required packages using pip:
+
+```bash
+pip install .
+```
+
+## 🛠️ Usage
+
+- Insert API keys in the `.env` file
+
+- You can execute the tools in the `src/tools` directory to test them individually using the `--test_switcher` (A, B, or C) flag:
+
+```bash
+python src/tools.py --test_switcher A 
+```
+
+- To run the RACRA agent in demo mode (conversation with memory and tool calls), use the following command:
+
+```bash
+python src/agents.py --execution_mode demo 
+```
+
+- To run the RACRA agent in interactive mode (ui), use the following command:
+
+```bash
+python src/agents.py --execution_mode ui 
+```
+
+The gradio ui will open in your browser, allowing you to interact with the agent and see user and assistant messages.
+The terminal output will display a more complete log with conversation turns, user queries, tool-calls and responses.
 ---
 
 ## 📎 License
