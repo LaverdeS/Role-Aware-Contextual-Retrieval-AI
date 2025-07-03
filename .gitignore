@@ -9,7 +9,9 @@ build/
 
 # Virtual environments
 venv/
-.env/
+
+# env variables
+.env
 
 # Checkpoints
 .gradio/
