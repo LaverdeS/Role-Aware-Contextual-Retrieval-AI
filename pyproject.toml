@@ -1,0 +1,21 @@
+[project]
+name = "role-aware-contextual-retrieval-ai"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "gradio",
+    "python-dotenv",
+    "fire",
+    "supabase",
+    "markitdown[all]",
+    "trafilatura",
+    "langchain",
+    "langchain-openai",
+    "langchain-community",
+    "langchain-tavily",
+    "langgraph",
+    "smolagents",
+    "tiktoken"
+]
