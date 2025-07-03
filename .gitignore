@@ -1,0 +1,16 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+*.egg-info/
+build/
+
+# Virtual environments
+venv/
+.env/
+
+# Checkpoints
+.gradio/
+.idea/
