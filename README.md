@@ -64,7 +64,7 @@ pip install .
 
 ## 🛠️ Usage
 
-- Insert API keys in the `.env` file
+- Insert API keys in the `.env` file (`OPENAI_API_KEY`, `TAVILY_API_KEY`, `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`)
 
 - You can execute the tools in the `src/tools` directory to test them individually using the `--test_switcher` (A, B, or C) flag:
 
@@ -86,6 +86,7 @@ python src/agents.py --execution_mode ui
 
 The gradio ui will open in your browser, allowing you to interact with the agent and see user and assistant messages.
 The terminal output will display a more complete log with conversation turns, user queries, tool-calls and responses.
+
 ---
 
 ## 📎 License
