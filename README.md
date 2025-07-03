@@ -64,7 +64,7 @@ pip install .
 
 ## 🛠️ Usage
 
-- Insert API keys in the `.env` file
+- Insert API keys in the `.env` file (`OPENAI_API_KEY`, `TAVILY_API_KEY`, `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`)
 
 - You can execute the tools in the `src/tools` directory to test them individually using the `--test_switcher` (A, B, or C) flag:
 
