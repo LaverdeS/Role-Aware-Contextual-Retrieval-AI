@@ -59,7 +59,7 @@ RACRA understands and tailors its responses based on the user’s role:
 Install the required packages using pip:
 
 ```bash
-pip install .
+pip install -r requirements.txt
 ```
 
 ## 🛠️ Usage
