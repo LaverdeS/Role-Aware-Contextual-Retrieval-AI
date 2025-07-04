@@ -1,6 +1,5 @@
-import json
 import inspect
-import shutil
+import pandas as pd
 
 from langchain_core.messages import HumanMessage, AIMessage
 
@@ -8,12 +7,26 @@ from rich.panel import Panel
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.json import JSON
+from rich.table import Table
 
 from typing import Callable, Union
 
 
 # helper functions
-def print_conversation(messages: list[dict[str, Union[str, list, dict]]]):
+def df_to_rich_table(df: pd.DataFrame) -> Table:
+    """Converts a pandas DataFrame to a Rich Table for display."""
+
+    table = Table(show_header=True, header_style="bold magenta")
+    for column in df.columns:
+        table.add_column(column)
+
+    for _, row in df.iterrows():
+        table.add_row(*map(str, row.values))
+
+    return table
+
+
+def print_conversation(messages: list[dict[str, Union[str, list, dict, pd.DataFrame]]]):
     """Prints a formatted conversation using Rich library."""
     console = Console(width=200, soft_wrap=True)
 
@@ -32,6 +45,10 @@ def print_conversation(messages: list[dict[str, Union[str, list, dict]]]):
 
             if isinstance(content, (dict, list)):
                 rendered_content = JSON.from_data(content)
+
+            elif isinstance(content, pd.DataFrame):
+                rendered_content = df_to_rich_table(content)
+
             else:  # most cases will be strings
                 rendered_content = Markdown(str(content).strip())
 
@@ -74,7 +91,7 @@ def print_tool_call(tool: Callable, tool_name: str, args: dict):
     )
 
 
-def print_tool_response(response: Union[str, list, dict]):
+def print_tool_response(response: Union[str, list, dict, pd.DataFrame]):
     """Prints the tool response for debugging purposes."""
     print_conversation(
         messages=[
