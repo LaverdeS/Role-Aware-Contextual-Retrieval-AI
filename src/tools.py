@@ -1,14 +1,15 @@
 import os
+import json
 import tiktoken
 import requests
 import logging
+import pandas as pd
 import trafilatura
-from fire import Fire
 
+from fire import Fire
 from dotenv import load_dotenv
 from supabase import create_client
 from markitdown import MarkItDown
-from bs4 import BeautifulSoup
 from openai import OpenAI
 
 from langchain.schema import Document
@@ -23,6 +24,7 @@ from warnings import filterwarnings
 from tqdm import tqdm
 
 from utils import print_tool_call, print_tool_response
+from supabase_ops import SUPABASE_TABLES, TEXT_FIELDS_SEPARATOR
 
 
 filterwarnings('ignore')
@@ -33,24 +35,63 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 supabase_client = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_SERVICE_KEY"))
-
-embeddings_model = OpenAIEmbeddings()
-
+embeddings_model = OpenAIEmbeddings(model="text-embedding-3-small")
 
 # supabase tools
-@tool
-def search_supabase(query: str, table_name: str) -> str:
-    """Search Supabase vector store for relevant documents based on the query."""
+def supabase_retriever_output_to_pandas(retrieved_rows_str: list[str], table_name: str) -> pd.DataFrame:
+    """
+    Converts the retrieved rows from Supabase into a formatted string for display.
+    It formats the output as a table with headers and rows, using the specified table name.
+    """
+    if not retrieved_rows_str:
+        return pd.DataFrame([["No data found"]], columns=["Message"])
 
+    headers = SUPABASE_TABLES[table_name]["output_fields"]
+    row_values = [row_str.split(TEXT_FIELDS_SEPARATOR) for row_str in retrieved_rows_str]
+    return pd.DataFrame(row_values, columns=headers)
+
+
+@tool
+def search_project_supabase(query: str, table_name: str, top_n: int = 10) -> pd.DataFrame:
+    """
+    Search the project's Supabase vector store for relevant documents based on the query and the specified table name.
+    Returns a string containing the content of the top_n most relevant documents.
+    It uses similarity search to find the most relevant documents in the specified table.
+    """
+    if CUSTOM_DEBUG:
+        print_tool_call(
+            search_project_supabase,
+            tool_name='search_project_supabase',
+            args={'query': query, 'table_name': table_name, 'top_n': top_n},
+        )
     vector_store = SupabaseVectorStore(
         client=supabase_client,
         embedding=embeddings_model,
         table_name=table_name,
-        query_name="match_documents_engineer_equipment_list"
+        query_name=f"match_documents_{table_name}"
     )
-    retriever = vector_store.as_retriever(search_type="similarity", k=5)  # similarity or mmr (maximal marginal relevance)
-    results = retriever.get_relevant_documents(query)
-    return "\n\n".join([doc.page_content for doc in results])
+    retriever = vector_store.as_retriever(search_type="similarity", k=top_n)  # similarity or mmr (maximal marginal relevance)
+    docs = retriever.get_relevant_documents(query)
+    retrieved_content = [doc.page_content.strip() for doc in docs]
+
+    if not retrieved_content:
+        retrieved_content = f"No relevant documents found in table '{table_name}' for query: {query}"
+
+    df = supabase_retriever_output_to_pandas(retrieved_content, table_name)
+    #df_markdown = df.to_markdown(index=False, tablefmt="grid")
+    if CUSTOM_DEBUG:
+        print_tool_response(df)
+    return df
+
+# Add supabase db information to the description of the tool
+supabase_tables_and_fields = {
+    k: {vk:vv for vk, vv in v.items() if vk != 'output_fields'} for k, v in SUPABASE_TABLES.items()
+}
+search_project_supabase.description = f"""
+{search_project_supabase.description}\n
+The supabase table names and their fields are as follows:
+{json.dumps(supabase_tables_and_fields, indent=2)}
+"""
 
 
 @tool
@@ -97,7 +138,6 @@ md = MarkItDown(
 def web_insight_scraper(query: str) -> list:
     """
     Searches the web for a given query, visits top relevant links, and extracts clean, token-limited summaries from each page.
-
     Returns a list of dictionaries containing the URL, title, and extracted text content, truncated to fit token constraints.
     Skips unsupported or slow-loading pages, and handles extraction in parallel for speed.
     """
@@ -301,21 +341,42 @@ def execute_tool_test(test_switcher):
             time.sleep(3)
 
     if test_switcher=="C":
+
         # supabase
-        query = "whatever"
+        query = "What equipment works with diesel?"
         table_name = "engineer_equipment_list"
-        _ = search_supabase.invoke({
+        _ = search_project_supabase.invoke({
             "query": query,
             "table_name": table_name
         })
 
-        query = "nothing"
-        table_name = "procurement_data"
-        _ = search_supabase.invoke({
+        query = "What equipment works with electricity?"
+        table_name = "engineer_equipment_list"
+        _ = search_project_supabase.invoke({
             "query": query,
             "table_name": table_name
         })
-        # 🚧 Update Embeddings Field in supabase for effective similarity search
+
+        query = "What are all the concrete materials names?"
+        table_name = "procurement_data"
+        _ = search_project_supabase.invoke({
+            "query": query,
+            "table_name": table_name
+        })
+
+        query = "Lessons learned about pipes."
+        table_name = "lesson_learn"
+        _ = search_project_supabase.invoke({
+            "query": query,
+            "table_name": table_name
+        })
+
+        query = "What's the name of the workers that are usually jammed on Traffic?"
+        table_name = "site_worker_presence"
+        _ = search_project_supabase.invoke({
+            "query": query,
+            "table_name": table_name
+        })
 
 
 if __name__ == "__main__":
