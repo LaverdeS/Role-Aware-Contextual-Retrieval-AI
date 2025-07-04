@@ -12,13 +12,27 @@ load_dotenv()
 supabase_client = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_SERVICE_KEY"))
 embedder = OpenAIEmbeddings(model="text-embedding-3-small")  # embedding_dim = 1536
 
-TABLES_NAMES_AND_FIELDS = {
-    "engineer_equipment_list": ["name", "medium", "description" "utilities"],
-    "lesson_learn": ["what", "why", "impact", "list_of_action"],
-    "procurement_data": ["supplier_name", "item_name", "item_type", "category", "description"],
-    "site_worker_presence": ["name", "status", "notes"]
+SUPABASE_TABLES = {
+    "engineer_equipment_list": {
+        "text_fields": ["name", "medium", "description", "utilities"],
+        "output_fields": ["id", "name", "medium", "description", "utilities", "status", "quantity"]
+    },
+    "lesson_learn": {
+        "text_fields": ["what", "why", "impact", "list_of_action"],
+        "output_fields": ["id", "what", "why", "impact", "list_of_action"]
+    },
+    "procurement_data": {
+        "text_fields": ["supplier_name", "item_name", "item_type", "category", "description"],
+        "output_fields": ["id", "supplier_name", "item_name", "item_type", "category", "description", "quantity", "unit", "unit_price", "total_cost", "status"]
+    },
+    "site_worker_presence": {
+        "text_fields": ["name", "status", "notes"],
+        "output_fields": ["id", "name", "status", "notes"]
+    }
 }
+
 ID_COLUMN = "id"
+TEXT_FIELDS_SEPARATOR = " || "
 
 
 def populate_embeddings(overwrite: bool = False):
@@ -27,7 +41,8 @@ def populate_embeddings(overwrite: bool = False):
     If overwrite is True, embeddings will be recomputed and updated for all rows.
     If overwrite is False, only rows with null embeddings will be processed.
     """
-    for table_name, text_fields in TABLES_NAMES_AND_FIELDS.items():
+    for table_name, metadata in SUPABASE_TABLES.items():
+        text_fields = metadata["text_fields"]
         logging.info(f"Populating embeddings for table: {table_name}")
         response = supabase_client.table(table_name).select("*").execute()
 
@@ -54,11 +69,11 @@ def populate_embeddings(overwrite: bool = False):
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-    overwrite = False
+    overwrite_embeddings = False
 
-    if not overwrite:
+    if not overwrite_embeddings:
         try:
-            populate_embeddings(overwrite=overwrite)
+            populate_embeddings()
         except ReadError:
             logging.warning(
                 "Unstable or throttled network (e.g., public Wi-Fi)."
@@ -69,8 +84,8 @@ if __name__ == "__main__":
             import time
             time.sleep(5)
             supabase_client = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_SERVICE_KEY"))
-            populate_embeddings(overwrite=overwrite)
+            populate_embeddings()
 
     else:
         logging.info("Overwriting all embeddings in the database.")
-        populate_embeddings(overwrite=True)
+        populate_embeddings(overwrite=overwrite_embeddings)
