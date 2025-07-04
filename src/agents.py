@@ -1,4 +1,5 @@
 import logging
+import gradio as gr
 import gradio_ui
 
 from dotenv import load_dotenv
@@ -10,8 +11,7 @@ from langgraph.prebuilt import create_react_agent
 from langgraph.checkpoint.memory import MemorySaver
 
 from tools import (
-    search_supabase,
-    index_documents,
+    search_project_supabase,
     web_insight_scraper,
     unified_text_loader
 )
@@ -83,21 +83,38 @@ def agents_execution(execution_mode: str):
         raise ValueError("Invalid execution mode. Use 'demo' or 'ui'.")
 
     logging.info(f"Execution mode set to: {execution_mode}")
+
+    tools = [
+        search_project_supabase,
+        web_insight_scraper,
+        unified_text_loader
+    ]
+    logging.info(f"Using tools:\n")
+
+    BOLD = "\033[1m"
+    END = "\033[0m"
+
+    for tool in tools:
+        logging.debug(f"Tool: {BOLD}{tool.name}{END}\n{tool.description}\n")
+
     if execution_mode == "demo":
         model_name = "gpt-4o-mini"
         agent_with_memory = PluggableMemoryAgent(
-            tools=[
-                web_insight_scraper,
-                unified_text_loader
-            ],
+            tools=tools,
             model=model_name
         )
         logging.info(f"Running in demo mode using {model_name}. Use 'ui' for web UI mode.")
 
-        _ = agent_out = agent_with_memory.invoke("Hi!")
+        # general
+        _ = agent_with_memory.invoke("Hi!")
         _ = agent_with_memory.invoke("What is the latest research on AI in construction (today is July 2025)?")
         agent_with_memory.invoke("What is the latest research on AI in BIM?")
         _ = agent_with_memory.invoke("What have we talked about?")
+
+        # supabase
+        _ = agent_with_memory.invoke("Share with me the total count of the available equipment")
+        _ = agent_with_memory.invoke("construction equipment")
+
         conversation_history = agent_with_memory.checkpointer.get(config={"configurable": {"thread_id": "default"}})
         logging.debug(f"\n\nConversation history keys: {list(conversation_history.keys())}")
 
@@ -105,14 +122,11 @@ def agents_execution(execution_mode: str):
     elif execution_mode == "ui":
         model_name = "gpt-4o"
         agent_with_memory = PluggableMemoryAgent(
-            tools=[
-                web_insight_scraper,
-                unified_text_loader
-            ],
+            tools=tools,
             model=model_name
         )
         logging.info(f"Running in web UI mode using {model_name}. Use 'demo' for demo mode.")
-        gradio_ui.GradioUI(agent_with_memory).launch()
+        gradio_ui.GradioUI(agent_with_memory).launch(theme=gr.themes.Base(default_mode="dark"))
 
 
 if __name__ == "__main__":
