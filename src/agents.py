@@ -126,10 +126,8 @@ def agents_execution(execution_mode: str):
             model=model_name
         )
         logging.info(f"Running in web UI mode using {model_name}. Use 'demo' for demo mode.")
-        gradio_ui.GradioUI(agent_with_memory).launch(theme=gr.themes.Base(default_mode="dark"))
+        gradio_ui.GradioUI(agent_with_memory).launch()
 
 
 if __name__ == "__main__":
     Fire(agents_execution)
-
-
