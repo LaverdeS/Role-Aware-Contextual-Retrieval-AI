@@ -1,3 +1,4 @@
+import os
 import logging
 import gradio as gr
 import gradio_ui
@@ -5,7 +6,7 @@ import gradio_ui
 from dotenv import load_dotenv
 
 from langchain_core.messages import HumanMessage
-from langchain_openai import ChatOpenAI
+from langchain_openai import AzureChatOpenAI
 from langchain.globals import set_debug
 from langgraph.prebuilt import create_react_agent
 from langgraph.checkpoint.memory import MemorySaver
@@ -32,7 +33,14 @@ class PluggableMemoryAgent:
     """A pluggable memory agent that can use various tools and has memory capabilities to keep the context of through session interactions."""
     def __init__(self, tools: list, model:str="gpt-4o"):
         try:
-            self.llm = ChatOpenAI(model=model, temperature=0, max_retries=3)
+            self.llm = AzureChatOpenAI(                
+                deployment_name=os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME"),
+                openai_api_version=os.getenv("AZURE_OPENAI_API_VERSION", "2023-05-15"),
+                azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+                openai_api_key=os.getenv("AZURE_OPENAI_API_KEY"),
+                openai_api_type="azure",
+                temperature=0.1,
+                max_tokens=500,)
         except Exception as e:
             logging.error(f"Failed to initialize LLM with model {model}: {str(e)}")
             raise ModuleNotFoundError(f"Failed to initialize LLM with model = {model}. Please check the model name and your OpenAI API key.")

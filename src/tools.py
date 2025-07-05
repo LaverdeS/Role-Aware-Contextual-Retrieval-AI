@@ -10,10 +10,10 @@ from fire import Fire
 from dotenv import load_dotenv
 from supabase import create_client
 from markitdown import MarkItDown
-from openai import OpenAI
+from openai import AzureOpenAI, OpenAI
 
 from langchain.schema import Document
-from langchain_openai import OpenAIEmbeddings
+from langchain_openai import AzureOpenAIEmbeddings
 from langchain_core.tools import tool
 from langchain_community.vectorstores import SupabaseVectorStore
 from langchain_community.tools.tavily_search import TavilySearchResults
@@ -35,7 +35,13 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 supabase_client = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_SERVICE_KEY"))
-embeddings_model = OpenAIEmbeddings(model="text-embedding-3-small")
+embeddings_model = AzureOpenAIEmbeddings(
+    azure_deployment=os.getenv("AZURE_EMBEDDING_DEPLOYMENT_NAME"),
+    openai_api_version=os.getenv("AZURE_OPENAI_API_VERSION"),
+    azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+    openai_api_key=os.getenv("AZURE_OPENAI_API_KEY"),
+    model=os.getenv("AZURE_EMBEDDING_MODEL_NAME", "text-embedding-3-small")  # Default to text-embedding-3-small if not specified
+)
 
 # supabase tools
 def supabase_retriever_output_to_pandas(retrieved_rows_str: list[str], table_name: str) -> pd.DataFrame:
@@ -125,7 +131,11 @@ session.headers.update({
     "Accept-Language": "en-US,en;q=0.9",
     "Accept-Encoding": "gzip, deflate, br"
 })
-markitdown_llm_client = OpenAI()
+markitdown_llm_client = AzureOpenAI(
+    api_key=os.getenv("AZURE_OPENAI_API_KEY"),
+    api_version=os.getenv("AZURE_OPENAI_API_VERSION"),
+    azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT")
+)
 md = MarkItDown(
     requests_session=session,
     llm_client = markitdown_llm_client,

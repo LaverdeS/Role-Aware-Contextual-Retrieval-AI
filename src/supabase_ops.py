@@ -4,13 +4,19 @@ import logging
 from dotenv import load_dotenv
 from httpx import ReadError
 from supabase import create_client
-from langchain_openai import OpenAIEmbeddings
+from langchain_openai import AzureOpenAIEmbeddings
 
 
 load_dotenv()
 
 supabase_client = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_SERVICE_KEY"))
-embedder = OpenAIEmbeddings(model="text-embedding-3-small")  # embedding_dim = 1536
+embedder = AzureOpenAIEmbeddings(
+    azure_deployment=os.getenv("AZURE_EMBEDDING_DEPLOYMENT_NAME"),
+    openai_api_version=os.getenv("AZURE_OPENAI_API_VERSION"),
+    azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+    openai_api_key=os.getenv("AZURE_OPENAI_API_KEY"),
+    model=os.getenv("AZURE_EMBEDDING_MODEL_NAME", "text-embedding-3-small")  # Default to text-embedding-3-small if not specified
+)
 
 SUPABASE_TABLES = {
     "engineer_equipment_list": {
