@@ -1,21 +1,19 @@
-import json
 import os
 import re
 import shutil
 import gradio as gr
 
 from typing import Optional
-
-from smolagents.agent_types import AgentAudio, AgentImage, AgentText, handle_agent_output_types
 from smolagents.agents import MultiStepAgent
+from smolagents.agent_types import AgentAudio, AgentImage, AgentText, handle_agent_output_types
 from smolagents.utils import _is_package_available
 
 
 def stream_to_gradio(
-    agent,
-    task: str,
-    reset_agent_memory: bool = False,
-    additional_args: Optional[dict] = None,
+        agent,
+        task: str,
+        reset_agent_memory: bool = False,
+        additional_args: Optional[dict] = None,
 ):
     """Runs an agent with the given task and streams the messages from the agent as gradio ChatMessages."""
     if not _is_package_available("gradio"):
@@ -23,9 +21,10 @@ def stream_to_gradio(
             "Please install 'gradio' extra to use the GradioUI: `pip install 'smolagents[gradio]'`"
         )
 
-    print(f"task {type(task)}: ", task)
-    final_answer = agent.invoke(task)
+    print(f"👤 User: ", task)
 
+    # synchronously invoke the agent
+    final_answer = agent.invoke(task)
     final_answer = handle_agent_output_types(final_answer)
 
     if isinstance(final_answer, AgentText):
@@ -47,6 +46,28 @@ def stream_to_gradio(
         yield gr.ChatMessage(role="assistant", content=f"**Final answer:** {str(final_answer)}")
 
 
+async def async_stream_to_gradio(
+    agent,
+    task: str,
+    reset_agent_memory: bool = False,
+    additional_args: Optional[dict] = None,
+):
+    """Runs an agent with the given task and streams the messages from the agent as gradio ChatMessages."""
+    if not _is_package_available("gradio"):
+        raise ModuleNotFoundError(
+            "Please install 'gradio' extra to use the GradioUI: `pip install 'smolagents[gradio]'`"
+        )
+
+    print(f"👤 User: ", task)
+    partial_response = ""
+    try:
+        async for chunk in agent.invoke_stream(task):
+            partial_response += chunk
+            yield gr.ChatMessage(role="assistant", content=partial_response)
+    except Exception as e:
+        yield gr.ChatMessage(role="assistant", content=f"Error during streaming: {str(e)}")
+
+
 class GradioUI:
     """A one-line interface to launch your agent in Gradio"""
 
@@ -64,9 +85,7 @@ class GradioUI:
                 os.mkdir(file_upload_folder)
 
     def interact_with_agent(self, prompt, messages, session_state):
-        import gradio as gr
 
-        # Get the agent type from the template agent
         if "agent" not in session_state:
             session_state["agent"] = self.agent
 
@@ -74,13 +93,40 @@ class GradioUI:
             messages.append(gr.ChatMessage(role="user", content=prompt))
             yield messages
 
-            for msg in stream_to_gradio(session_state["agent"], task=prompt, reset_agent_memory=False):
-                messages.append(msg)
+            partial_response = ""
+            for chunk in session_state["agent"].invoke(prompt):
+                partial_response += chunk
+                if messages and messages[-1].role == "assistant":
+                    messages[-1].content = partial_response  # Update last assistant message
+                else:
+                    messages.append(gr.ChatMessage(role="assistant", content=partial_response))
                 yield messages
 
             yield messages
         except Exception as e:
-            print(f"Error in interaction: {str(e)} \n{e.__traceback__}\nsession_state: {json.dumps(session_state, indent=2)}")
+            messages.append(gr.ChatMessage(role="assistant", content=f"Error: {str(e)}"))
+            yield messages
+
+    async def async_interact_with_agent(self, prompt, messages, session_state):
+
+        if "agent" not in session_state:
+            session_state["agent"] = self.agent
+
+        try:
+            messages.append(gr.ChatMessage(role="user", content=prompt))
+            yield messages
+
+            partial_response = ""
+            async for chunk in session_state["agent"].invoke_stream(prompt):
+                partial_response += chunk
+                if messages and messages[-1].role == "assistant":
+                    messages[-1].content = partial_response  # Update last assistant message
+                else:
+                    messages.append(gr.ChatMessage(role="assistant", content=partial_response))
+                yield messages
+
+            yield messages
+        except Exception as e:
             messages.append(gr.ChatMessage(role="assistant", content=f"Error: {str(e)}"))
             yield messages
 
@@ -184,11 +230,14 @@ class GradioUI:
             )
 
             # Set up event handlers
+            streaming = self.agent.streaming if hasattr(self.agent, 'streaming') else False
+            agent_interaction_method = self.interact_with_agent if not streaming else self.async_interact_with_agent
+
             text_input.submit(
                 self.log_user_message,
                 [text_input, file_uploads_log],
                 [stored_messages, text_input, submit_btn],
-            ).then(self.interact_with_agent, [stored_messages, chatbot, session_state], [chatbot]).then(
+            ).then(agent_interaction_method, [stored_messages, chatbot, session_state], [chatbot]).then(
                 lambda: (
                     gr.Textbox(
                         interactive=True, placeholder="Enter your prompt here and press Shift+Enter or the button"
@@ -203,7 +252,7 @@ class GradioUI:
                 self.log_user_message,
                 [text_input, file_uploads_log],
                 [stored_messages, text_input, submit_btn],
-            ).then(self.interact_with_agent, [stored_messages, chatbot, session_state], [chatbot]).then(
+            ).then(agent_interaction_method, [stored_messages, chatbot, session_state], [chatbot]).then(
                 lambda: (
                     gr.Textbox(
                         interactive=True, placeholder="Enter your prompt here and press Shift+Enter or the button"
@@ -217,4 +266,4 @@ class GradioUI:
         demo.launch(debug=True, share=share, **kwargs)
 
 
-__all__ = ["stream_to_gradio", "GradioUI"]
+__all__ = ["stream_to_gradio", "async_stream_to_gradio", "GradioUI"]

@@ -54,7 +54,7 @@ def supabase_retriever_output_to_pandas(retrieved_rows_str: list[str], table_nam
 @tool
 def search_project_supabase(query: str, table_name: str, top_n: int = 10) -> pd.DataFrame:
     """
-    Search the project's Supabase vector store for relevant documents based on the query and the specified table name.
+    Search the project's Supabase db using a vector store retriever for relevant documents based on the query and the specified table name.
     Returns a string containing the content of the top_n most relevant documents.
     It uses similarity search to find the most relevant documents in the specified table.
     """
@@ -265,7 +265,9 @@ def unified_text_loader(file_path: str) -> str:
     """
     Intelligently reads and extracts text content from a wide range of file types and URLs.
     It handles PDFs, DOCX, TXT, CSV, and web pages, while gracefully detecting unsupported formats like certain audio,
-    image, and video types. Falls back to alternative extraction methods when needed for maximum resilience.
+    and video types. Falls back to alternative extraction methods when needed for maximum resilience.
+    This tool enhances the agent's ability to process diverse data sources, including image formats (".png", ".jpg", ".jpeg").
+    It receives a file path or URL as input and returns the extracted text content.
     """
     if CUSTOM_DEBUG:
         print_tool_call(
