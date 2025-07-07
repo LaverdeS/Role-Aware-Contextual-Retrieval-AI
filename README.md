@@ -9,7 +9,7 @@
   </a>
 </p>
 
-RACRA is a multi-agent conversational system equipped role-aware RAG and several other tools. This role-sensitive agent is designed to streamline access to critical information for **Architects**, **Engineers**, and **Project Managers**. By integrating multiple data sources and leveraging contextual reasoning, RACRA enhances productivity, decision-making, and knowledge sharing across complex project environments.
+RACRA is a multi-agent conversational system equipped with a role-aware RAG and several other tools. This role-sensitive agent is designed to streamline access to critical information for **Architects**, **Engineers**, and **Project Managers**. By integrating multiple data sources and leveraging contextual reasoning, RACRA enhances productivity, decision-making, and knowledge sharing across complex project environments.
 
 ---
 
@@ -86,6 +86,13 @@ python src/agents.py --execution_mode ui
 
 The gradio ui will open in your browser, allowing you to interact with the agent and see user and assistant messages.
 The terminal output will display a more complete log with conversation turns, user queries, tool-calls and responses.
+
+
+By default the agent and application will stream the responses (`streaming=True`), but you can disable this behaviour by adding the `--streaming` flag:
+
+```bash
+python src/agents.py --execution_mode ui --streaming False
+```
 
 ---
 
