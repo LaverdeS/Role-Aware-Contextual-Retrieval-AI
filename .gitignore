@@ -16,3 +16,6 @@ venv/
 # Checkpoints
 .gradio/
 .idea/
+
+# Development files
+dev/
