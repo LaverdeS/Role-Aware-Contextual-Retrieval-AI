@@ -189,6 +189,12 @@ class GradioUI:
                 )
 
                 with gr.Group():
+                    gr.Markdown("**Select your role**", container=True)
+                    with gr.Row():
+                        architect_btn = gr.Button("👷 Architect", variant="secondary")
+                        engineer_btn = gr.Button("🔧 Engineer", variant="secondary")
+                        pm_btn = gr.Button("📊 Project Manager", variant="secondary")
+                    
                     gr.Markdown("**Your request**", container=True)
                     text_input = gr.Textbox(
                         lines=3,
@@ -197,6 +203,30 @@ class GradioUI:
                         placeholder="Enter your prompt here and press Shift+Enter or press the button",
                     )
                     submit_btn = gr.Button("Submit", variant="primary")
+                    
+                    # Role button click handlers
+                    def select_role(role_name, messages):
+                        role_message = f"{role_name}, "
+                        messages.append(gr.ChatMessage(role="system", content=role_message))
+                        return messages, role_message
+                    
+                    architect_btn.click(
+                        fn=lambda messages: select_role("Architect", messages),
+                        inputs=[stored_messages],
+                        outputs=[stored_messages, text_input]
+                    )
+                    
+                    engineer_btn.click(
+                        fn=lambda messages: select_role("Engineer", messages),
+                        inputs=[stored_messages],
+                        outputs=[stored_messages, text_input]
+                    )
+                    
+                    pm_btn.click(
+                        fn=lambda messages: select_role("Project Manager", messages),
+                        inputs=[stored_messages],
+                        outputs=[stored_messages, text_input]
+                    )
 
                 # If an upload folder is provided, enable the upload feature
                 if self.file_upload_folder is not None:
