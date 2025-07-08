@@ -189,7 +189,7 @@ def agents_execution(execution_mode: str = "ui", streaming: bool = True):
             asyncio.run(run_stream(agent_with_memory, query))
 
     elif execution_mode == "ui":
-        model_name = "gpt-4o"
+        model_name = "gpt-4o-mini"
         agent_with_memory = PluggableMemoryAgent(
             tools=tools,
             model=model_name,
