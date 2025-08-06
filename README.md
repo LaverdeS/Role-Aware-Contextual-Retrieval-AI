@@ -94,6 +94,83 @@ By default the agent and application will stream the responses (`streaming=True`
 python src/agents.py --execution_mode ui --streaming False
 ```
 
+The following is a screenshot of a user interacting with the agent through the gradio UI. The user intention triggers a RAG response:
+
+![RACRA Gradio UI](https://raw.githubusercontent.com/LaverdeS/Role-Aware-Contextual-Retrieval-AI/main/docs/ui_screenshot.jpeg)
+
+
+---
+
+## 📡 API Usage
+
+This is a locally deployed FastAPI server that wraps an LLM agent powered by LangChain, with tool support and optional streaming responses.
+The API provides two endpoints for interacting with the agent:
+
+- `POST /invoke`: Returns a single full response.
+- `POST /invoke-streaming`: Streams the response incrementally using Server-Sent Events (SSE).
+
+---
+
+#### ✅ Health Check
+
+Check if the server is running:
+
+```bash
+curl http://localhost:5000/health
+```
+
+Expected response:
+
+```json
+{"status": "healthy"}
+```
+
+---
+
+#### 🧠 Ask a Question (Full Response)
+
+```bash
+curl -X POST \
+  http://localhost:5000/invoke \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "question": "What tools are you using?"
+  }'
+```
+
+Expected response:
+
+```json
+{"result": "I'm using tools like search_project_supabase, web_insight_scraper, and unified_text_loader."}
+```
+
+---
+
+#### 🔄 Ask a Question (Streaming Response)
+
+```bash
+curl -N -X POST \
+  http://localhost:5000/invoke-streaming \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: text/event-stream' \
+  -d '{
+    "question": "Give me a brief overview of your capabilities"
+  }'
+```
+
+> Use `-N` to disable buffering so you see the streamed response in real time.
+
+---
+
+#### 📝 Notes
+
+- Make sure your `.env` file is configured with all necessary environment variables (e.g., `OPENAI_API_KEY`, `PHOENIX_API_KEY`).
+- Run the server with:
+  ```bash
+  python streaming_api.py
+  ```
+
+
 ---
 
 ## 📎 License
