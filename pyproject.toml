@@ -18,5 +18,6 @@ dependencies = [
     "langgraph",
     "smolagents",
     "tiktoken",
-    "arize-phoenix"
+    "arize-phoenix",
+    "uvicorn",
 ]

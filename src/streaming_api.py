@@ -1,42 +1,63 @@
 import os
-from getpass import getpass
+import uvicorn
+
 from typing import List, AsyncGenerator
 from langchain_core.messages import HumanMessage
 from tqdm import tqdm
 from fastapi import FastAPI
-from agent import app as agent_app
+from agents import PluggableMemoryAgent
 from phoenix.otel import register
 from fastapi import HTTPException
 from typing import List
 from pydantic import BaseModel
 from fastapi.responses import StreamingResponse
+from dotenv import load_dotenv
+from tools import (
+    search_project_supabase,
+    web_insight_scraper,
+    unified_text_loader
+)
 
-# Set up environment variables
-if os.getenv("OPENAI_API_KEY") is None:
-    os.environ["OPENAI_API_KEY"] = getpass("Enter your OpenAI API key: ")
-
-if os.getenv("PHOENIX_API_KEY") is None:
-    os.environ["PHOENIX_API_KEY"] = getpass("Enter your Phoenix API key: ")
-
-os.environ["PHOENIX_COLLECTOR_ENDPOINT"] = "https://app.phoenix.arize.com/"
+# Load environment variables from .env file
+load_dotenv()
 os.environ["PHOENIX_CLIENT_HEADERS"] = f"api_key={os.getenv('PHOENIX_API_KEY')}"
 
 # Initialize Phoenix tracing
-project_name = "agent-operations-course"
+project_name = "agent-racra"
 tracer_provider = register(
     project_name=project_name,
     auto_instrument=True,
 )
 
+model_name = "gpt-4o-mini"
+tools = [
+        search_project_supabase,
+        web_insight_scraper,
+        unified_text_loader
+    ]
+
+agent_app = PluggableMemoryAgent(  # streaming = True
+    tools=tools,
+    model=model_name,
+    streaming=True
+)
+
+
+async def run_stream(agent, prompt):
+    """Helper methods for running the agent and stream the response."""
+    async for chunk in agent.invoke_stream(prompt):
+        print(chunk, end="", flush=True)
+
 
 def run_single_question(question: str) -> str:
     """Run the agent with a single question"""
     try:
-        result = agent_app.invoke({"messages": [HumanMessage(content=question)]})
-        return result["messages"][-1].content
+        result = agent_app.invoke(question)
+        return result
     except Exception as e:
         print(f"Error processing question: {question}")
         print(e)
+        return "Error: " + str(e)
 
 
 def run_multiple_questions(questions: List[str]) -> None:
@@ -47,6 +68,7 @@ def run_multiple_questions(questions: List[str]) -> None:
 
 async def stream_agent_response(question: str) -> AsyncGenerator[str, None]:
     """Stream the agent's response for a given question"""
+    """
     try:
         for chunk in agent_app.stream(
                 {"messages": [HumanMessage(content=question)]}, stream_mode="values"
@@ -54,6 +76,11 @@ async def stream_agent_response(question: str) -> AsyncGenerator[str, None]:
             response = chunk["messages"][-1].content
             if response:
                 yield f"data: {response}\n\n"
+    """
+    try:
+        async for chunk in agent_app.invoke_stream(question):
+            yield f"data: {chunk}\n\n"
+
     except Exception as e:
         print(f"Error streaming response for question: {question}")
         print(e)
@@ -94,3 +121,10 @@ async def process_question_streaming(input_data: QuestionInput):
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+if __name__ == "__main__":
+
+    config = uvicorn.Config("streaming_api:app", port=5000, log_level="info")
+    server = uvicorn.Server(config)
+    server.run()
