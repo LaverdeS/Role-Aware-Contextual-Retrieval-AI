@@ -17,5 +17,6 @@ dependencies = [
     "langchain-tavily",
     "langgraph",
     "smolagents",
-    "tiktoken"
+    "tiktoken",
+    "arize-phoenix"
 ]
