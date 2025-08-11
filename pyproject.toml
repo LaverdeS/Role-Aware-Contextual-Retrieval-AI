@@ -20,4 +20,6 @@ dependencies = [
     "tiktoken",
     "arize-phoenix",
     "uvicorn",
+    "openinference-instrumentation-openai",
+    "openinference-instrumentation-langchain"
 ]
