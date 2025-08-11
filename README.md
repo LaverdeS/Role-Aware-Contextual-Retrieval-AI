@@ -96,8 +96,7 @@ python src/agents.py --execution_mode ui --streaming False
 
 The following is a screenshot of a user interacting with the agent through the gradio UI. The user intention triggers a RAG response:
 
-![RACRA Gradio UI](https://raw.githubusercontent.com/LaverdeS/Role-Aware-Contextual-Retrieval-AI/main/docs/ui_screenshot.jpeg)
-
+![RACRA Gradio UI](docs/ui_screenshot.jpeg)
 
 ---
 
@@ -170,9 +169,17 @@ curl -N -X POST \
   python streaming_api.py
   ```
 
-
 ---
 
+## 🧭 Observability
+
+This project includes full observability support using [Arize Phoenix](https://arize.com/docs/ax), with OpenTelemetry-based **tracing**, **instrumentation**, and **monitoring**. Application performance, agent behavior, and system-level events are captured and exported to the Phoenix cloud platform via the configured `PHOENIX_COLLECTOR_ENDPOINT`. This enables real-time inspection, debugging, and evaluation of LLM-driven workflows through the Phoenix UI. You need to set your environment variable `PHOENIX_API_KEY` to your Arize Phoenix API key to enable observability.
+
+Here is a screenshot of the traces captured by Arize Phoenix:
+
+![RACRA Gradio UI](docs/arize_tracing.jpg)
+
+---
 ## 📎 License
 
 This work is licensed under a
