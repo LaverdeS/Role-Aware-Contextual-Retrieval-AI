@@ -103,7 +103,7 @@ class PluggableMemoryAgent:
         stream = self.agent.astream_events(
             {"messages": [human_message]}, config=config, version="v2"
         )
-
+        chunk = {"messages": [human_message]}
         async for event in stream:
             kind = event["event"]
             data = event.get("data") or {}
@@ -125,6 +125,8 @@ class PluggableMemoryAgent:
                     yield f"```json\n{json.dumps(json.loads(latest_tool_args), indent=2)}\n```\n"
 
         await asyncio.sleep(0.05)
+        # print last chunk
+        print(f"last streamed chunk in agent's response:\n\n{getattr(chunk, "content", None) or chunk["messages"][-1]}\n")
 
 
 async def run_stream(agent, prompt):
