@@ -11,34 +11,33 @@
 
 RACRA is a multi-agent conversational system equipped with a role-aware RAG and several other tools. This role-sensitive agent is designed to streamline access to critical information for **Architects**, **Engineers**, and **Project Managers**. By integrating multiple data sources and leveraging contextual reasoning, RACRA enhances productivity, decision-making, and knowledge sharing across complex project environments.
 
----
+We are evaluating system workflows that balance agent autonomy with explicit control, ranging from fully autonomous agents with dynamic decision-making capabilities that reduce human oversight, to highly controlled state-graph-driven workflows that ensure predictable execution and strict compliance with organizational requirements. The key challenge is combining the adaptability of high-agency architectures with the reliability of deterministic routing by selectively constraining or expanding an agent's decision space based on task criticality, creating a hybrid model that remains flexible for unstructured scenarios while maintaining rigidity where precision and governance are essential.
 
-## 🚀 Key Features
+The most determinist yet agentic workflow is represented as a fully routed, role-specific pipeline in which the user’s role determines a tailored data flow. Each role, Architect, Engineer, or Project Manager, engages with dedicated prompts and queries distinct, relevant databases such as SQL project repositories, vector design stores, and knowledge bases. This structured yet role-adaptive routing ensures that information retrieval and decision support are precisely aligned with the responsibilities and data needs of each stakeholder, thereby maximizing efficiency and contextual relevance across the project lifecycle.
 
-- **🔍 Autonomous Source Selection**  
-  Dynamically determines the most relevant data source (SQL, vector DB, knowledge base) based on the user’s query.
+The following diagram illustrates such a workflow:
 
+![RACRA Architecture](docs/workflow.png)
 
-- **🔗 Multi-Source Integration**  
-  Combines information from multiple sources to provide comprehensive, unified answers.
+The base system could be plugged with additional self-reflection, correction, and rephrasing cycles to increase the accuracy once evaluation metrics are set in place.
 
+The source router with RAG could be easily extended to support several static knowledge bases as seen better below:
 
-- **📚 Citation Generation**  
-  Automatically includes references to the original data sources for transparency and traceability.
+![RACRA Architecture](docs/source_router.png)"
 
+The agentic system is also capable of retrieving real-time information from the web, such as the latest news, weather, or stock prices, using the `web_insight_scraper` tool and `unified_text_loader` to load several document formats from the local path or urls targets. This allows the agent to provide up-to-date information and insights to users.
 
-- **🧠 Contextual Awareness**  
-  Maintains conversational context to deliver coherent, relevant follow-up responses.
+### 🛠️ Tools description
 
-
-- **🛠️ Tool Utilization**  
-  Employs specialized tools like web search, calculators, or custom plugins when needed.
+- **search_project_supabase**: Retrieves information from the Supabase database, which contains project-related data such as specifications, schedules, and budgets.
+- **web_insight_scraper**: Scrapes web pages for real-time information, such as news, weather, or stock prices.
+- **unified_text_loader**: Loads and processes various document formats (PDF, DOCX, TXT, PNG, XLSX, CSV and more) from local paths or specific target URLs to scrape information from, enabling the agent to access and analyze diverse content types.
 
 ---
 
 ## 👥 Role-Based Intelligence
 
-RACRA understands and tailors its responses based on the user’s role:
+RACRA understands and tailors its responses based on the user’s role/task:
 
 ### 👷 Engineer
 - Access to technical specifications, system details, and engineering-focused data  
