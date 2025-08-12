@@ -19,6 +19,7 @@ from tools import (
 )
 from fire import Fire
 from utils import print_conversation
+from typing import Union
 
 
 set_debug(False)
@@ -32,7 +33,7 @@ load_dotenv()
 
 class PluggableMemoryAgent:
     """A pluggable memory agent that can use various tools and has memory capabilities to keep the context of through session interactions."""
-    def __init__(self, tools: list, model:str="gpt-4o", streaming: bool = True):
+    def __init__(self, tools: list, model:str="gpt-4o", backstory:str="", streaming: bool = True):
         self.streaming = streaming
         try:
             self.llm = ChatOpenAI(model=model, temperature=0, max_retries=3, streaming=streaming)
@@ -70,21 +71,26 @@ class PluggableMemoryAgent:
             or similar; instead, think ahead and provide one of: OR(genera suggestion, query suggestion, next step) that the user might find useful based on the context of the conversation and the tools available to you.
             
             Thanks to the tool `unified_text_loader` you have the capability to interpret images directly passing a `file_path` to the tool. The same tool can be used to load text files, PDFs, and other document formats.
-            """,  # Give backstory prompt to the agent (SystemMessage)
+            """ if not backstory else backstory,  # Give backstory prompt to the agent (SystemMessage)
             debug=False,
         )
 
 
-    def invoke(self, message: str, reset_agent_memory: bool = False, thread_id: str = "default") -> str:
+    def invoke(self, message: Union[str, list[str]], reset_agent_memory: bool = False, thread_id: str = "default") -> str:
         """Invoke the agent with a task. Send a message to the agent and get a response."""
         if reset_agent_memory:
             self.checkpointer.delete_thread(thread_id)
 
-        human_message = HumanMessage(content=message)
-        print_conversation([{"role": "user", "content": human_message}])
-
         config = {"configurable": {"thread_id": thread_id}}
-        result = self.agent.invoke({"messages": [human_message]}, config=config)
+
+        if isinstance(message, str):
+            messages = [HumanMessage(content=message)]
+            print_conversation([{"role": "user", "content": messages[0]}])
+
+        elif isinstance(message, list):
+            messages = [HumanMessage(content=" ".join(m)) for m in message]
+
+        result = self.agent.invoke({"messages": messages}, config=config)
         response = result["messages"][-1].content
         print_conversation([{"role": "assistant", "content": response}])
 

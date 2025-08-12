@@ -310,6 +310,13 @@ def unified_text_loader(file_path: str) -> str:
     return result
 
 
+@tool
+def get_user_input(message_to_user: str) -> str:
+    """Prompt the user for input with a specific message."""
+    user_message = input(f"\n{message_to_user}\n.")
+    return user_message
+
+
 def execute_tool_test(test_switcher):
     """
     Executes a dummy test based on the switcher value.
