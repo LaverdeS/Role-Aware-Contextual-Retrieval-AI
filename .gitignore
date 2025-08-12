@@ -19,3 +19,6 @@ venv/
 
 # Development files
 dev/
+
+# conda
+anaconda_projects/
